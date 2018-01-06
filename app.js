@@ -25,7 +25,9 @@ function setDataControl () {
             url = url.substring(0,4) !== "http" ? "http://" + url : url;
             
             liveLinks.push({title: title, url: url});
-            //liveLinks.push().set({title: title, url: url});
+            //The push method produces the same result as .push().set() method
+            //below. 
+            //liveLinks.push().set({title: title, url: url}); 
                     
         },
         linkListener : function () {
