@@ -1,3 +1,5 @@
+var liveLinks; //set variable to hold reference to the database
+
 function initializeFirebase () {
     
     // Initialize Firebase
@@ -12,45 +14,84 @@ function initializeFirebase () {
       //Initializing pust a global variable "firebase" in your application
     
       firebase.initializeApp(config);
-
+    liveLinks = firebase.database().ref("links");  
 }
 
-function setLink () {
-    let liveLinks = firebase.database().ref("links");
-    var submitLink = function (url, title) {
-        url = url.substring(0,4) !== "http" ? "https//" + url : url;
-        liveLinks.push(btoa /*<- Method use for base64 url encode */ (url))
-        .set({title:title});
+function setDataControl () {
+    var controls = {
+
+        submitLink : function (url, title) {
+                    
+            url = url.substring(0,4) !== "http" ? "http://" + url : url;
+            
+            liveLinks.push({title: title, url: url});
+            //liveLinks.push().set({title: title, url: url});
+                    
+        },
+        linkListener : function () {
+
+            liveLinks.on('value', function (snap) {
+
+                $(".links-link").empty();
+
+                var links = snap.val();
+                
+                for (var key in links) {
+        
+                    if (links.hasOwnProperty(key)) {
+
+                        var link = links[key];
+                        
+                        $(".links-link").append( 
+                            $("<li/>").append(
+                                $("<a/>", {href: link.url, text: link.title})
+                            )
+                        );
+                    
+                    }
+                
+                }
+                
+                //this.linkListener(preparedLinks);
+                //console.log(this);
+                console.log(preparedLinks);
+            }.bind(this))
+            
+        } 
+
     };
-     
-    return submitLink;
-
-}
-
+    return liveLinks.linkListControls = controls;
+};
+    
 function addEventListeners () {
-
-    linkFormListener();
+    
+    setDataControl(); 
+    linkFormSubmit();
+    linkListDisplayer();
 
 }
 
-function linkFormListener() {
+function linkFormSubmit () {
 
-$(".link-firm form").submit(function(e){
+    $(".link-form form").submit(function(e){
 
     e.preventDefault();
-    ll = setLink();
-    ll($('input.link-url').val(), $('input.link-title').val());
+    
+    var ll = liveLinks.linkListControls;
+    ll.submitLink($('input.link-url').val(), $('input.link-title').val());
     $("input[type=text]").val("").blur();
     return false;    
 
-});
-
-
+    });
 }
 
-$(document).ready(function() {
+function linkListDisplayer () {
+    
+    liveLinks.linkListControls.linkListener();
+}
+
+$(document).ready(function () {
     initializeFirebase();
     addEventListeners();
-
-    
+   
 });
